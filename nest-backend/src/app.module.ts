@@ -1,22 +1,32 @@
-// nest-backend/src/app.module.ts
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OrdersModule } from './orders/orders.module';
 import { Order } from './orders/order.entity';
 
 @Module({
   imports: [
-    // Konfigurasi koneksi ke PostgreSQL
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost', // Ganti sesuai host PostgreSQL Anda
-      port: 5432, // Port default PostgreSQL
-      username: 'postgres', // Ganti sesuai username Anda
-      password: 'password', // Ganti sesuai password Anda
-      database: 'postgres', // Ganti dengan nama database
-      entities: [Order],
-      synchronize: true, // Hanya untuk development; nonaktifkan di production
+    // Load konfigurasi dari .env
+    ConfigModule.forRoot({
+      isGlobal: true, // Agar bisa diakses di seluruh aplikasi
     }),
+
+    // Konfigurasi koneksi ke PostgreSQL menggunakan variabel .env
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [Order],
+        synchronize: configService.get<boolean>('DB_SYNCHRONIZE') === true,
+      }),
+    }),
+
     OrdersModule,
   ],
 })

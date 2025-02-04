@@ -1,4 +1,3 @@
-// nest-backend/src/orders/orders.controller.ts
 import {
   Controller,
   Post,
@@ -19,7 +18,14 @@ export class OrdersController {
       const order = await this.ordersService.createOrder(createOrderDto);
       return { status: 'success', data: order };
     } catch (error) {
-      throw new HttpException('Gagal membuat order', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        {
+          status: 'error',
+          message: 'Failed to Create Order',
+          error: error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     }
   }
 }
