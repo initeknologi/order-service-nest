@@ -1,0 +1,31 @@
+services:
+#  postgres:
+#    image: postgres:16
+#    restart: always
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: password
+#      POSTGRES_DB: postgres
+#    ports:
+#      - "5432:5432"
+
+  nest-app:
+    build: .
+    container_name: nest-app
+    restart: always
+    ports:
+      - "4000:4000"  # Host port 80 -> Container port 4000
+    depends_on:
+      - postgres
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=airflow
+      - DB_PASSWORD=airflow
+      - DB_NAME=airflow
+
+    volumes:
+      - /home/ubuntu/order-service-nest/nest-backend:/app
+      - /app/node_modules  # **Pastikan hanya node_modules yang di-mount**
+    command: npm run start:prod

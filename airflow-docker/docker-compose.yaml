@@ -16,6 +16,27 @@ services:
     ports:
       - "6379:6379"
 
+  nest-app:
+    build:
+      context: /home/ubuntu/order-service-nest/nest-backend
+    container_name: nest-app
+    restart: always
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=airflow
+      - DB_PASSWORD=airflow
+      - DB_NAME=postgres
+    volumes:
+      - /home/ubuntu/order-service-nest/nest-backend:/app
+      - /app/node_modules
+    command: npm run start:prod
+
   airflow:
     image: apache/airflow:2.5.0
     restart: always
@@ -24,16 +45,14 @@ services:
       - redis
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
-      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
     ports:
       - "9090:8080"
-    command: >
-      bash -c "airflow db init &&
-               airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin &&
-               airflow scheduler & airflow webserver"
+    entrypoint: ["/bin/bash", "-c", "mkdir -p /opt/airflow/logs/scheduler && chown -R airflow:airflow /opt/airflow/logs && chmod -R 777 /opt/airflow/logs && airflow db init && airflow users create --username admin --firstname Admin --lastname User --role Admin --email admin@example.com --password admin && airflow scheduler & airflow webserver"]
+
 volumes:
   postgres-data:
